@@ -65,35 +65,6 @@ class DraggableList:
         for obj in self._objects:
             obj.drag(x, y, dx, dy)
 
-    #
-    # def processDragStartEvent(self, x: float, y: float):
-    #     """Check every object in list and calls dragStart if needed
-    #     :see game.GameObject.Draggable.dragStart
-    #     """
-    #     for obj in self._objects:
-    #         if not obj.isDragged():
-    #             obj.dragStart(x, y)
-    #
-    #
-    # def processDragEvent(self, x: float, y: float, dx: float, dy: float):
-    #     """Check every object in list and calls drag if needed
-    #     :see game.GameObject.Draggable.drag
-    #     """
-    #     for obj in self._objects:
-    #         if obj.isDragged():
-    #             obj.drag(x, y, dx, dy)
-    #
-    #
-    # def processDragStopEvent(self):
-    #     """Check every object in list and calls dragStop if needed
-    #     :see game.GameObject.Draggable.dragStop
-    #     """
-    #     for obj in self._objects:
-    #         if obj.isDragged():
-    #             obj.dragStop()
-
-
-
     def __getitem__(self, i: int) -> Draggable:
         return self._objects[i]
 
