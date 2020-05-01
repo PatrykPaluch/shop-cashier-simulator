@@ -2,6 +2,7 @@ import arcade
 from game.GameObjects import Product
 from game.Utils import *
 from random import random
+import pyglet.gl as gl
 
 class TestView(arcade.View):
 
@@ -15,10 +16,15 @@ class TestView(arcade.View):
         self.draggableList.reverse() # Makes sprites at top the most priority
 
     def on_show(self):
-     pass
+        arcade.set_background_color(arcade.color.BLACK)
+
 
     def on_draw(self):
         arcade.start_render()
+        # Pixel perfect settings (OpenGL)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+
+
         self.gameObjects.draw()
         pass
 
