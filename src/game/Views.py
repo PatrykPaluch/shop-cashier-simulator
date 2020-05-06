@@ -1,10 +1,11 @@
 import arcade
-from game.GameObjects import Product
+from arcade import View
+from game.GameObjects import Product, ActionButton
 from game.Utils import *
 from random import random
 import pyglet.gl as gl
 
-class TestView(arcade.View):
+class TestView(View):
 
     def __init__(self):
         super().__init__()
@@ -21,7 +22,7 @@ class TestView(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-        # Pixel perfect settings (OpenGL)
+        # Pixel perfect settings (in OpenGL)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
 
 
@@ -45,3 +46,53 @@ class TestView(arcade.View):
         if _buttons & arcade.MOUSE_BUTTON_LEFT == arcade.MOUSE_BUTTON_LEFT:
             self.draggableList.drag(x, y, dx, dy)
 
+class MenuView(View):
+
+    def __init__(self):
+        super().__init__()
+
+        self.theme = arcade.Theme()
+        self.sprites = arcade.SpriteList()
+
+    def startGame(self):
+        self.window.show_view(TestView())
+
+    def exitGame(self):
+        self.window.close()
+
+    def setupTheme(self):
+        self.theme.set_font(24, arcade.color.BLACK)
+        normal = resourcePath("UI/menuButton.png")
+        hover = resourcePath("UI/menuButton_hover.png")
+        clicked = resourcePath("UI/menuButton_clicked.png")
+        locked = resourcePath("UI/menuButton_locked.png")
+        self.theme.add_button_textures(normal, hover, clicked, locked)
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+
+        self.setupTheme()
+
+        (w, h) = self.window.get_size()
+
+        self.button_list.append(ActionButton(150, h-75, 200, 50, "Start", self.theme, action=lambda source: self.startGame()))
+        self.button_list.append(ActionButton(150, h-150, 200, 50, "Wyjście", self.theme, action=lambda source: self.exitGame()))
+
+        backgroundImage = arcade.Sprite(resourcePath("UI/menuBg.png"), 4, 0, 0, 0, 0, w/2, h/2)
+        self.sprites.append(backgroundImage)
+
+    def on_draw(self):
+        arcade.start_render()
+
+        # Pixel perfect settings (in OpenGL)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+
+
+        self.sprites.draw( filter=gl.GL_NEAREST )
+
+        for button in self.button_list:
+            button.draw()
+
+
+class GameLoadingView(View):
+    pass

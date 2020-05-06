@@ -1,11 +1,10 @@
 import arcade
-from game.Views import TestView
-
+from game.Views import MenuView
 
 def main():
     game = arcade.Window(800, 600, "Test")
-    testView = TestView()
-    game.show_view(testView)
+    menuView = MenuView()
+    game.show_view(menuView)
     arcade.run()
 
 

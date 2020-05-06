@@ -1,4 +1,32 @@
+from typing import *
+import arcade
 from arcade import Sprite
+
+class ActionButton(arcade.TextButton):
+    def __init__(self, x: float, y: float, w: float, h: float, text: str, theme: arcade.Theme = None, action: Callable[[arcade.TextButton], None] = None):
+        """
+        Do all registered actions on click
+        :param action: Function to execute (params: [source]; returns: None)
+        """
+        super().__init__(x, y, w, h, text, theme=theme)
+        self.actions = []
+        if action:
+            self.actions.append(action)
+
+    def addAction(self, action: Callable[[arcade.TextButton], None]):
+        self.actions.append(action)
+
+    def removeAction(self, action: Callable[[arcade.TextButton], None]):
+        self.actions.remove(action)
+
+    def on_press(self):
+        self.pressed = True
+
+    def on_release(self):
+        if self.pressed:
+            for action in self.actions:
+                action(self)
+            self.pressed = False
 
 class Draggable:
     def __init__(self):
