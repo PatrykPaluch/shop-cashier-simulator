@@ -1,9 +1,9 @@
 from typing import *
-from game.GameObjects import Draggable
 from Definitions import *
+from game.GameObjects import Draggable
 
 def resourcePath(resource: str) -> str:
-    return PATH_RES.joinpath(resource).absolute()
+    return str(PATH_RES.joinpath(resource).absolute())
 
 class DraggableList:
     """

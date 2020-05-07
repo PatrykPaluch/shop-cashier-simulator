@@ -1,13 +1,14 @@
 import arcade
 from arcade import View
-from game.GameObjects import Product, ActionButton
-from game.Utils import *
+from game.Utils import DraggableList, resourcePath
+from game.GameObjects import Product, CashRegister, ActionButton
 from random import random
 import pyglet.gl as gl
 
 class TestView(View):
 
     def __init__(self):
+        from game.Utils import resourcePath
         super().__init__()
         self.gameObjects = arcade.SpriteList()
         for i in range(5):
@@ -15,9 +16,11 @@ class TestView(View):
 
         self.draggableList = DraggableList(self.gameObjects)
         self.draggableList.reverse() # Makes sprites at top the most priority
+        self.cashRegister = CashRegister(400, 300)
+
 
     def on_show(self):
-        arcade.set_background_color(arcade.color.BLACK)
+        arcade.set_background_color(arcade.color.ALICE_BLUE)
 
 
     def on_draw(self):
@@ -25,8 +28,10 @@ class TestView(View):
         # Pixel perfect settings (in OpenGL)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
 
+        self.cashRegister.draw()
 
-        self.gameObjects.draw()
+        #self.gameObjects.draw()
+
         pass
 
     def on_update(self, delta_time: float):
@@ -36,15 +41,22 @@ class TestView(View):
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.draggableList.dragStart(x, y)
+            self.cashRegister.onMousePress(x, y)
+
 
     def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
         if button == arcade.MOUSE_BUTTON_LEFT:
             self.draggableList.dragStop()
+            self.cashRegister.onMouseRelease(x, y)
 
 
     def on_mouse_drag(self, x: float, y: float, dx: float, dy: float, _buttons: int, _modifiers: int):
         if _buttons & arcade.MOUSE_BUTTON_LEFT == arcade.MOUSE_BUTTON_LEFT:
             self.draggableList.drag(x, y, dx, dy)
+
+
+    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        self.cashRegister.onMouseMove(x, y, dx, dy)
 
 class MenuView(View):
 
@@ -61,7 +73,7 @@ class MenuView(View):
         self.window.close()
 
     def setupTheme(self):
-        self.theme.set_font(24, arcade.color.BLACK)
+        self.theme.set_font(18, arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
         normal = resourcePath("UI/menuButton.png")
         hover = resourcePath("UI/menuButton_hover.png")
         clicked = resourcePath("UI/menuButton_clicked.png")
