@@ -1,6 +1,7 @@
 from typing import *
 import arcade
 from arcade import Sprite
+from enum import Enum
 
 class ActionButton(arcade.TextButton):
     def __init__(self, x: float, y: float, w: float, h: float, text: str, theme: arcade.Theme = None, action: Callable[[arcade.TextButton], None] = None):
@@ -64,11 +65,17 @@ class Draggable:
         return self._isDragged
 
 
+class ProductType(Enum):
+    BY_PIECE = 1
+    BY_WEIGHT = 2
+
 class Product(Sprite, Draggable):
 
-    def __init__(self, texture: str, x: float, y: float, w: float, h: float, *, image_x=0.0, image_y=0.0, image_width=0.0, image_height=0.0):
+    def __init__(self, name: str, type: ProductType, price: int, texture: str, x: float, y: float, w: float, h: float, *, weight=1, image_x=0.0, image_y=0.0, image_width=0.0, image_height=0.0):
         """
-        :param texture:
+        :param name: name of product
+        :param type: product type
+        :param texture: path to texture
         :param x: position x of sprite
         :param y: position y of sprite
         :param w: width of sprite
@@ -76,9 +83,19 @@ class Product(Sprite, Draggable):
         :see arcade.Sprite
         """
         super().__init__(texture, center_x=x, center_y=y, image_x=image_x, image_y=image_y, image_width=image_width, image_height=image_height) #Sprite
+        self.__name = name
+        self.__type = type
+        self.__price = price
+        if type == ProductType.BY_PIECE:
+            self.__weight = 1
+        else:
+            self.__weight = weight
+
+        # from Draggable
         self._isDragged = False
         self._dragOffsetX = 0.0
         self._dragOffsetY = 0.0
+        # from Sprite
         self.width = w
         self.height = h
         # IntelliJ just thinks this function has no arguments -.-
@@ -100,13 +117,27 @@ class Product(Sprite, Draggable):
         self.center_x = x + self._dragOffsetX
         self.center_y = y + self._dragOffsetY
 
+    def getName(self):
+        return self.__name
+
+    def getType(self):
+        return self.__type
+
+    def getPrice(self):
+        return self.__price
+
+    def getWeight(self):
+        return self.__weight
+
+
 class GameObject:
     """
     Describe Object with basic functionality (like arcade.Sprite) but is not a Sprite.
     Has own position (x,y)
     """
 
-    def __init__(self, x=0, y=0):
+    # Przykład samodokumentującego się kodu
+    def __init__(self, x: float=0, y: float=0):
         self.__x = x
         self.__y = y
 
@@ -143,12 +174,20 @@ class CashRegister(GameObject):
     Will sends events to callback functions
     """
 
-
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float, onScan: Callable[[], list] = None, onNext: Callable[[], None] = None ):
+        """
+        :param x: position x
+        :param y: position y
+        :param onScan: callback called when "Scan" button is pressed
+        :param onNext: callback called when "Next" button is pressed
+        """
         from game.Utils import resourcePath
         super().__init__(x, y)
 
-        scale = 2
+        self.onScanFunction = onScan
+        self.onNextFunction = onNext
+
+        scale = 1.5
 
         # ======= Main sprite
         w = 160*scale
@@ -159,12 +198,12 @@ class CashRegister(GameObject):
 
         # ======= Text label
         textLabelTheme = arcade.Theme()
-        textLabelTheme.set_font(12, arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
+        textLabelTheme.set_font(int(6*scale), arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
         textLabelTheme.add_text_box_texture(resourcePath("UI/TextLabel.png"))
 
-        lbW = 80*scale
-        lbH = 16*scale
-        self.__textLabel = arcade.TextDisplay( x-w/2 + 40*scale + lbW/2,
+        lbW = int(143*scale)
+        lbH = int(16*scale)
+        self.__textLabel = arcade.TextDisplay( x-w/2 + 8*scale + lbW/2,
                                                y+h/2 - 4*scale  - lbH/2,
                                                lbW, lbH, theme=textLabelTheme
                                              )
@@ -177,7 +216,7 @@ class CashRegister(GameObject):
         btSizeWithMargin = btSize + 4*scale
 
         buttonTheme = arcade.Theme()
-        buttonTheme.set_font(18, arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
+        buttonTheme.set_font(int(9*scale), arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
         buttonTheme.add_button_textures(
             resourcePath("UI/numpadButton.png"),
             resourcePath("UI/numpadButton_hover.png"),
@@ -193,18 +232,19 @@ class CashRegister(GameObject):
             ["DEL", "0", None,  "Next" ]
         ]
 
+
         self.__buttons : List[arcade.TextButton] = []
         for by in range(4):
             for bx  in range(4):
                 if buttonMap[by][bx]:
                     bt = ActionButton( x-w/2 + btOffsetLeft + bx*btSizeWithMargin + btSize/2,
                                        y+h/2 - btOffsetTop  - by*btSizeWithMargin - btSize/2,
-                                       btSize, btSize, buttonMap[by][bx], theme=buttonTheme,
+                                       int(btSize), int(btSize), buttonMap[by][bx], theme=buttonTheme,
                                        action=lambda source: self._buttonPress(source.text)
                                      )
 
                     if len(buttonMap[by][bx]) > 2:
-                        bt.font_size -= 8
+                        bt.font_size -= int(4*scale)
 
                     self.__buttons.append(bt)
 
@@ -219,8 +259,21 @@ class CashRegister(GameObject):
             self.__textLabel.text += bt
         elif bt=="DEL":
             self.__textLabel.text = ""
-        else:
-            self.__textLabel.text = "|"+bt+"|"
+        elif bt=="Scan":
+            scannedProducts = self.onScanFunction()
+            if len(scannedProducts) == 1 and isinstance(scannedProducts[0], Product):
+                prd: Product = scannedProducts[0]
+                self.__textLabel.text = prd.getName() + " "
+                if prd.getType() == ProductType.BY_PIECE:
+                    self.__textLabel.text += str(prd.getPrice()/100) + "kom"
+                else:
+                    self.__textLabel.text += str(prd.getWeight()/100) + "kg"
+                pass
+            else:
+                self.__textLabel.text = " ERROR "
+        elif bt=="Next":
+            self.onNextFunction()
+        #else: pass
 
     def draw(self):
         self.__sprite.draw()

@@ -1,7 +1,7 @@
 import arcade
 from arcade import View
 from game.Utils import DraggableList, resourcePath
-from game.GameObjects import Product, CashRegister, ActionButton
+from game.GameObjects import *
 from random import random
 import pyglet.gl as gl
 
@@ -12,12 +12,16 @@ class TestView(View):
         super().__init__()
         self.gameObjects = arcade.SpriteList()
         for i in range(5):
-            self.gameObjects.append( Product(resourcePath("pepti.png"), random()*300, random()*300, 100, 100) )
+            self.gameObjects.append( Product("Pepti", ProductType.BY_PIECE, 350, resourcePath("pepti.png"), random()*100+650, random()*500+50, 100, 100) )
+
 
         self.draggableList = DraggableList(self.gameObjects)
         self.draggableList.reverse() # Makes sprites at top the most priority
-        self.cashRegister = CashRegister(400, 300)
-
+        self.scanner = Sprite(resourcePath("UI/scanner.png"), scale=0.25, center_x=400, center_y=150)
+        self.cashRegister = CashRegister(400, 400,
+                                         lambda: self.scanner.collides_with_list(self.gameObjects),
+                                         lambda: None
+                                        )
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALICE_BLUE)
@@ -29,8 +33,9 @@ class TestView(View):
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
 
         self.cashRegister.draw()
+        self.scanner.draw()
 
-        #self.gameObjects.draw()
+        self.gameObjects.draw()
 
         pass
 
