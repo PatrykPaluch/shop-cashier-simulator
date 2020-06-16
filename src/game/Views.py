@@ -5,11 +5,15 @@ from game.GameObjects import *
 from random import random
 import pyglet.gl as gl
 
-class TestView(View):
+class GameView(View):
 
     def __init__(self):
         from game.Utils import resourcePath
         super().__init__()
+        self.productList = [
+
+        ]
+
         self.gameObjects = arcade.SpriteList()
         for i in range(5):
             self.gameObjects.append( Product("Pepti", ProductType.BY_PIECE, 350, resourcePath("pepti.png"), random()*100+650, random()*500+50, 100, 100) )
@@ -22,6 +26,12 @@ class TestView(View):
                                          lambda: self.scanner.collides_with_list(self.gameObjects),
                                          lambda: None
                                         )
+        self.currentProducts = {}
+        self.checkedProducts = {}
+
+
+    def generateClient(self):
+        pass
 
     def on_show(self):
         arcade.set_background_color(arcade.color.ALICE_BLUE)
@@ -72,7 +82,7 @@ class MenuView(View):
         self.sprites = arcade.SpriteList()
 
     def startGame(self):
-        self.window.show_view(TestView())
+        self.window.show_view(GameView())
 
     def exitGame(self):
         self.window.close()

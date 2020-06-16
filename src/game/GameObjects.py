@@ -80,6 +80,9 @@ class Product(Sprite, Draggable):
         :param y: position y of sprite
         :param w: width of sprite
         :param h: height of sprite
+        :param type: type of product (by piece/weight)
+        :param price: price of product (for piece/1kg)
+        :param weight: weight of product, only for type=BY_WEIGHT
         :see arcade.Sprite
         """
         super().__init__(texture, center_x=x, center_y=y, image_x=image_x, image_y=image_y, image_width=image_width, image_height=image_height) #Sprite
@@ -129,6 +132,11 @@ class Product(Sprite, Draggable):
     def getWeight(self):
         return self.__weight
 
+    def clone(self):
+        """Creates new identical product
+        :return: clone of self
+        """
+        return Product(self.__name, self.__type, self.__price, self.texture, self.center_x, self.center_y, self.width, self.height, weight=self.__weight)
 
 class GameObject:
     """
@@ -184,6 +192,8 @@ class CashRegister(GameObject):
         from game.Utils import resourcePath
         super().__init__(x, y)
 
+        self.__resetText = True
+
         self.onScanFunction = onScan
         self.onNextFunction = onNext
 
@@ -207,7 +217,7 @@ class CashRegister(GameObject):
                                                y+h/2 - 4*scale  - lbH/2,
                                                lbW, lbH, theme=textLabelTheme
                                              )
-        self.__textLabel.text = "test"
+        self.__textLabel.text = ""
 
         # ======= buttons
         btSize = 32*scale
@@ -250,27 +260,55 @@ class CashRegister(GameObject):
 
         #<<<<END __init__
 
+    def __changeText(self, text, resetText = False):
+        """ Appends or sets text in text field.
+
+        :param text: Text to set/append
+        :param resetText: if true then sets text, append text otherwise.
+        """
+        if self.__resetText or resetText:
+            self.__textLabel.text = ""
+            self.__resetText = False
+
+        self.__textLabel.text += text
+
+    def __setError(self):
+        """
+        Sets text to " ERROR " and sets self.__resetText flag
+        :see __changeText:
+        """
+        self.__textLabel.text = " ERROR "
+        self.__resetText = True
+
     def _buttonPress(self, bt):
         """
         Callback function for buttons
         :param bt: button name (str)
         """
         if bt in [ str(x) for x in range(10) ]:
-            self.__textLabel.text += bt
+            self.__changeText(bt)
         elif bt=="DEL":
             self.__textLabel.text = ""
         elif bt=="Scan":
+            noProductStr = self.__textLabel.text
+            if not noProductStr.isdigit() or noProductStr.startswith("0"):
+                self.__setError()
+                return
+
+            noProduct = int(noProductStr)
             scannedProducts = self.onScanFunction()
             if len(scannedProducts) == 1 and isinstance(scannedProducts[0], Product):
                 prd: Product = scannedProducts[0]
-                self.__textLabel.text = prd.getName() + " "
+                self.__textLabel.text = noProductStr + "x " + prd.getName() + " "
                 if prd.getType() == ProductType.BY_PIECE:
                     self.__textLabel.text += str(prd.getPrice()/100) + "kom"
                 else:
                     self.__textLabel.text += str(prd.getWeight()/100) + "kg"
                 pass
             else:
-                self.__textLabel.text = " ERROR "
+                self.__setError()
+
+            self.__resetText = True
         elif bt=="Next":
             self.onNextFunction()
         #else: pass
