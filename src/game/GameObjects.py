@@ -70,6 +70,7 @@ class ProductType(Enum):
     BY_WEIGHT = 2
 
 class Product(Sprite, Draggable):
+    __lastId = 0
 
     def __init__(self, name: str, type: ProductType, price: int, texture: str, x: float, y: float, w: float, h: float, *, weight=1, image_x=0.0, image_y=0.0, image_width=0.0, image_height=0.0):
         """
@@ -86,6 +87,7 @@ class Product(Sprite, Draggable):
         :see arcade.Sprite
         """
         super().__init__(texture, center_x=x, center_y=y, image_x=image_x, image_y=image_y, image_width=image_width, image_height=image_height) #Sprite
+        self.__texturePath = texture
         self.__name = name
         self.__type = type
         self.__price = price
@@ -105,6 +107,8 @@ class Product(Sprite, Draggable):
         # noinspection PyArgumentList
         self.set_hit_box([[w / 2, h / 2], [w / 2, -h / 2], [-w / 2, -h / w], [-w / 2, h / 2]])
 
+        self.__id = Product.__lastId
+        Product.__lastId += 1
 
     def dragStart(self, x: float, y: float):
         if self.collides_with_point( (x,y) ):
@@ -132,11 +136,40 @@ class Product(Sprite, Draggable):
     def getWeight(self):
         return self.__weight
 
-    def clone(self):
-        """Creates new identical product
+    def clone(self, weight=-1):
+        """Creates new identical product (can change weight)
+        :param weight: weight to override or -1 to keep original
         :return: clone of self
         """
-        return Product(self.__name, self.__type, self.__price, self.texture, self.center_x, self.center_y, self.width, self.height, weight=self.__weight)
+        return Product(self.__name, self.__type, self.__price, self.__texturePath,
+                       self.center_x, self.center_y,
+                       self.width, self.height,
+                       weight= self.__weight if weight<0 else weight )
+
+    def __eq__(self, other):
+        if other is None or other.__class__ != self.__class__:
+            return False
+
+        # product is defined by hi params, not by Sprite
+        return self.__name == other.__name and self.__price == other.__price \
+           and self.__type == other.__type and self.__weight == other.__weight
+
+
+    def __hash__(self):
+        _hash = hash(self.__name) ^ hash(self.__price) ^ hash(self.__type) ^ hash(self.__weight)
+        if self.__type == ProductType.BY_WEIGHT:
+            _hash ^= hash(self.__id)
+        return _hash
+
+    def specialHash(self):
+        # each product has unique id
+        return hash(self.__id)
+
+    def specialEquals(self, other):
+        if other is None or other.__class__ != self.__class__:
+            return False
+        # each product has unique id
+        return self.__id == other.__id
 
 class GameObject:
     """
@@ -182,12 +215,16 @@ class CashRegister(GameObject):
     Will sends events to callback functions
     """
 
-    def __init__(self, x: float, y: float, onScan: Callable[[], list] = None, onNext: Callable[[], None] = None ):
+    def __init__(self, x: float, y: float,
+                 onScan: Callable[[], list] = None,
+                 onNext: Callable[[], None] = None,
+                 onOk: Callable[[Product, int], None] = None):
         """
         :param x: position x
         :param y: position y
         :param onScan: callback called when "Scan" button is pressed
         :param onNext: callback called when "Next" button is pressed
+        :param onOk: callback called when "Ok" button is pressed
         """
         from game.Utils import resourcePath
         super().__init__(x, y)
@@ -196,6 +233,10 @@ class CashRegister(GameObject):
 
         self.onScanFunction = onScan
         self.onNextFunction = onNext
+        self.onOkFunction   = onOk
+
+        self.__lastScanProduct = None
+        self.__lastScanCount = 0
 
         scale = 1.5
 
@@ -208,7 +249,7 @@ class CashRegister(GameObject):
 
         # ======= Text label
         textLabelTheme = arcade.Theme()
-        textLabelTheme.set_font(int(6*scale), arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
+        textLabelTheme.set_font(int(4*scale), arcade.color.BLACK, resourcePath("Fonts/PS2P.ttf"))
         textLabelTheme.add_text_box_texture(resourcePath("UI/TextLabel.png"))
 
         lbW = int(143*scale)
@@ -300,17 +341,24 @@ class CashRegister(GameObject):
             if len(scannedProducts) == 1 and isinstance(scannedProducts[0], Product):
                 prd: Product = scannedProducts[0]
                 self.__textLabel.text = noProductStr + "x " + prd.getName() + " "
+                self.__lastScanProduct = prd
+                self.__lastScanCount = noProduct
                 if prd.getType() == ProductType.BY_PIECE:
                     self.__textLabel.text += str(prd.getPrice()/100) + "kom"
                 else:
                     self.__textLabel.text += str(prd.getWeight()/100) + "kg"
-                pass
             else:
                 self.__setError()
 
             self.__resetText = True
         elif bt=="Next":
             self.onNextFunction()
+        elif bt=="OK":
+            if not self.__lastScanProduct is None:
+                self.__textLabel.text = ""
+                self.onOkFunction(self.__lastScanProduct, self.__lastScanCount)
+                self.__lastScanProduct = None
+                self.__lastScanCount = 0
         #else: pass
 
     def draw(self):

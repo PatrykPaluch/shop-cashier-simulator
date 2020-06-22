@@ -1,9 +1,14 @@
 from typing import *
 from Definitions import *
 from game.GameObjects import Draggable
+import time
+
 
 def resourcePath(resource: str) -> str:
     return str(PATH_RES.joinpath(resource).absolute())
+
+def currTimeMs():
+    return int(time.time()*1000)
 
 class DraggableList:
     """

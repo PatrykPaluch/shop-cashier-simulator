@@ -1,5 +1,7 @@
 import arcade
-from game.Views import MenuView
+from game.Views import MenuView,GameEndView,LoseReason
+import PIL.ImageFont
+import game.Utils as Utils
 
 def main():
     gameWindow = arcade.Window(800, 600, "Test")
