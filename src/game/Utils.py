@@ -1,14 +1,36 @@
 from typing import *
 from Definitions import *
-from game.GameObjects import Draggable
+import game.GameObjects as go
 import time
 
 
 def resourcePath(resource: str) -> str:
+    """
+    Joins res/ and 'resource' paths and return it as str
+    :param resource: resource in res/ directory
+    :return: return absolute path to resource
+    """
     return str(PATH_RES.joinpath(resource).absolute())
 
+
 def currTimeMs():
+    """
+    :return: current time in milliseconds
+    """
     return int(time.time()*1000)
+
+
+def noProducts(productDict : Dict[Any, int]):
+    """Counts all products
+    :param productDict: product dict (Product, count) pair
+    :return: Number of all products in dict
+    """
+    n = 0
+    for key in productDict.keys():
+        n += productDict[key]
+
+    return n
+
 
 class DraggableList:
     """
@@ -22,9 +44,9 @@ class DraggableList:
                          Will be added only object of instance Draggable
         """
         if initList:
-            self._objects: List[Draggable] = [ obj for obj in initList if isinstance(obj, Draggable) ]
+            self._objects: List[go.Draggable] = [ obj for obj in initList if isinstance(obj, go.Draggable) ]
         else:
-            self._objects: List[Draggable] = []
+            self._objects: List[go.Draggable] = []
 
         self._isAnyInDrag = False
 
@@ -32,12 +54,12 @@ class DraggableList:
         self._objects.reverse()
 
 
-    def append(self, obj : Draggable):
-        if isinstance(obj, Draggable):
+    def append(self, obj : go.Draggable):
+        if isinstance(obj, go.Draggable):
             self._objects.append(obj)
 
 
-    def remove(self, obj : Draggable):
+    def remove(self, obj : go.Draggable):
         self._objects.remove(obj)
 
     def isAnyInDrag(self):
@@ -70,7 +92,7 @@ class DraggableList:
         for obj in self._objects:
             obj.drag(x, y, dx, dy)
 
-    def __getitem__(self, i: int) -> Draggable:
+    def __getitem__(self, i: int) -> go.Draggable:
         return self._objects[i]
 
     def __iter__(self):

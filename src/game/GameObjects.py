@@ -1,6 +1,5 @@
 from typing import *
 import arcade
-from arcade import Sprite
 from enum import Enum
 
 class ActionButton(arcade.TextButton):
@@ -69,19 +68,19 @@ class ProductType(Enum):
     BY_PIECE = 1
     BY_WEIGHT = 2
 
-class Product(Sprite, Draggable):
+class Product(arcade.Sprite, Draggable):
     __lastId = 0
 
-    def __init__(self, name: str, type: ProductType, price: int, texture: str, x: float, y: float, w: float, h: float, *, weight=1, image_x=0.0, image_y=0.0, image_width=0.0, image_height=0.0):
+    def __init__(self, name: str, prdType: ProductType, price: int, texture: str, x: float, y: float, w: float, h: float, *, weight=1, image_x=0.0, image_y=0.0, image_width=0.0, image_height=0.0):
         """
         :param name: name of product
-        :param type: product type
+        :param prdType: product type
         :param texture: path to texture
         :param x: position x of sprite
         :param y: position y of sprite
         :param w: width of sprite
         :param h: height of sprite
-        :param type: type of product (by piece/weight)
+        :param prdType: type of product (by piece/weight)
         :param price: price of product (for piece/1kg)
         :param weight: weight of product, only for type=BY_WEIGHT
         :see arcade.Sprite
@@ -89,9 +88,9 @@ class Product(Sprite, Draggable):
         super().__init__(texture, center_x=x, center_y=y, image_x=image_x, image_y=image_y, image_width=image_width, image_height=image_height) #Sprite
         self.__texturePath = texture
         self.__name = name
-        self.__type = type
+        self.__type = prdType
         self.__price = price
-        if type == ProductType.BY_PIECE:
+        if prdType == ProductType.BY_PIECE:
             self.__weight = 1
         else:
             self.__weight = weight
@@ -248,7 +247,7 @@ class CashRegister(GameObject):
         # ======= Main sprite
         w = 160*scale
         h = 176*scale
-        self.__sprite = Sprite(resourcePath("UI/cashRegister.png"), center_x=x, center_y=y)
+        self.__sprite = arcade.Sprite(resourcePath("UI/cashRegister.png"), center_x=x, center_y=y)
         self.__sprite.width = w
         self.__sprite.height = h
 
