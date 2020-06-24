@@ -218,13 +218,18 @@ class CashRegister(GameObject):
     def __init__(self, x: float, y: float,
                  onScan: Callable[[], list] = None,
                  onNext: Callable[[], None] = None,
-                 onOk: Callable[[Product, int], None] = None):
+                 onOk: Callable[[Union[Product, List[Product]], int], None] = None):
         """
         :param x: position x
         :param y: position y
-        :param onScan: callback called when "Scan" button is pressed
-        :param onNext: callback called when "Next" button is pressed
-        :param onOk: callback called when "Ok" button is pressed
+        :param onScan: callback called when "Scan" button is pressed.
+            <ol><li><b>param: Product | List[Product]</b> - Product if is by_piece,
+                        otherwise multiple products by_weight as List[Product]</li>
+                <li><b>param: int</b> - if Product is by_piece then entered number, otherwise 1 (when multiple products
+                        by_weight)</li></ol>
+        :param onNext: callback called when "Next" button is pressed.
+        :param onOk: callback called when "Ok" button is pressed.
+            <ul><li><b>returns</b> - list of object on scanner</li><ul>
         """
         from game.Utils import resourcePath
         super().__init__(x, y)
@@ -331,22 +336,62 @@ class CashRegister(GameObject):
         elif bt=="DEL":
             self.__textLabel.text = ""
         elif bt=="Scan":
-            noProductStr = self.__textLabel.text
-            if not noProductStr.isdigit() or noProductStr.startswith("0"):
-                self.__setError()
-                return
 
-            noProduct = int(noProductStr)
             scannedProducts = self.onScanFunction()
-            if len(scannedProducts) == 1 and isinstance(scannedProducts[0], Product):
-                prd: Product = scannedProducts[0]
-                self.__textLabel.text = noProductStr + "x " + prd.getName() + " "
-                self.__lastScanProduct = prd
-                self.__lastScanCount = noProduct
-                if prd.getType() == ProductType.BY_PIECE:
-                    self.__textLabel.text += str(prd.getPrice()/100) + "kom"
+            noScannedProducts = len(scannedProducts)
+
+            if noScannedProducts > 0 and isinstance(scannedProducts[0], Product):
+
+                noProductStr = self.__textLabel.text
+
+                # ========= BY WEIGHT =========
+                if scannedProducts[0].getType() == ProductType.BY_WEIGHT:
+                    # Screen must be empty
+                    if len(noProductStr) > 0:
+                        self.__setError()
+                        return
+
+                    weightSum = 0
+                    prdName = scannedProducts[0].getName()
+                    for prd in scannedProducts:
+                        # Only products by weight can be scanned with others at same time
+                        if (not isinstance(prd, Product)) or prd.getType() != ProductType.BY_WEIGHT:
+                            self.__setError()
+                            return
+                        # Each scanned product must have equal name (eg. 'onion', 'banana')
+                        if prd.getName() != prdName:
+                            self.__setError()
+                            return
+                        weightSum += prd.getWeight()
+
+                    # Each with same name has same price
+                    pricePerKgInKom = scannedProducts[0].getPrice() / 100
+                    weightInKg = weightSum / 100
+                    priceForAllInKom = int(pricePerKgInKom * weightInKg * 100) / 100
+                    self.__textLabel.text = prdName + ": " \
+                                            + str(weightInKg) + "kg | " + str(priceForAllInKom) + "kom"
+
+                    self.__setLastScannedProduct(scannedProducts, 1)
+
+                # ========= BY PIECE =========
                 else:
-                    self.__textLabel.text += str(prd.getWeight()/100) + "kg"
+                    # only one product by time
+                    if noScannedProducts != 1:
+                        self.__setError()
+                        return
+
+                    # must enter number
+                    if not noProductStr.isdigit() or noProductStr.startswith("0"):
+                        self.__setError()
+                        return
+
+                    noProduct = int(noProductStr)
+                    prd: Product = scannedProducts[0]
+
+                    self.__textLabel.text = noProductStr + "x " + prd.getName() + ": " +  str((prd.getPrice()*noProduct)/100) + "kom"
+
+                    self.__setLastScannedProduct(prd, noProduct)
+
             else:
                 self.__setError()
 
@@ -360,6 +405,10 @@ class CashRegister(GameObject):
                 self.__lastScanProduct = None
                 self.__lastScanCount = 0
         #else: pass
+
+    def __setLastScannedProduct(self, prd, count=1):
+        self.__lastScanProduct = prd
+        self.__lastScanCount = count
 
     def draw(self):
         self.__sprite.draw()

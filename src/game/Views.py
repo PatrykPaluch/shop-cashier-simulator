@@ -28,9 +28,9 @@ class GameView(View):
         self.productByWeightList = [
             Product("Jabłko",    ProductType.BY_WEIGHT, 100, resourcePath("Products/apple.png"),    0, 0, 100, 100),
             Product("Brokół",    ProductType.BY_WEIGHT, 50 , resourcePath("Products/broccoli.png"), 0, 0, 100, 100),
-            Product("Banan",     ProductType.BY_WEIGHT, 150, resourcePath("Products/banana.png"),   0, 0, 100, 100),
+            Product("Banan",     ProductType.BY_WEIGHT, 500, resourcePath("Products/banana.png"),   0, 0, 100, 100),
             Product("Marchew",   ProductType.BY_WEIGHT, 100, resourcePath("Products/carrot.png"),   0, 0, 100, 100),
-            Product("Wisnia",    ProductType.BY_WEIGHT, 50 , resourcePath("Products/cherry.png"),   0, 0, 100, 100),
+            Product("Wisnia",    ProductType.BY_WEIGHT, 250 , resourcePath("Products/cherry.png"),   0, 0, 100, 100),
             Product("Kukurydza", ProductType.BY_WEIGHT, 250, resourcePath("Products/corn.png"),     0, 0, 100, 100),
             Product("Cebula",    ProductType.BY_WEIGHT, 50 , resourcePath("Products/onion.png"),    0, 0, 100, 100),
             Product("Ziemniak",  ProductType.BY_WEIGHT, 50 , resourcePath("Products/potato.png"),   0, 0, 100, 100),
@@ -83,8 +83,8 @@ class GameView(View):
         return n
 
     def addProductAsGameObject(self, product :Product):
-        product.center_x = random.randint(650, 750)
-        product.center_y = random.randint(0, 500)
+        product.center_x = random.randint(550, 750)
+        product.center_y = random.randint(50, 550)
         self.gameObjects.append(product)
 
     def nextClient(self):
@@ -117,7 +117,20 @@ class GameView(View):
             self.endGame(LoseReason.PRODUCT_MISSED)
 
 
-    def onOkButton(self, product :Product, count :int):
+    def onOkButton(self, product :Union[Product, List[Product]], count :int):
+        if isinstance(product, Product):
+            self.flagAsChecked(product, count)
+        else:
+            for prd in product:
+                self.flagAsChecked(prd, 1)
+
+    def flagAsChecked(self, product :Product, count :int):
+        """Flags specific product as checked witch means product was scanned and scan was accepted by pressing "ok"
+        button.
+
+        :param product: Product to flag
+        :param count: Number of products of same kind (equal by __eq__ func)
+        """
         if product in self.currentProducts:
             currCount = self.currentProducts[product]
             if product in self.checkedProducts:
@@ -136,12 +149,19 @@ class GameView(View):
         """Creates client product dictionary
         :return: Client product dictionary
         """
+        minProductCount = 10
+        maxProductCount = 20
+        minProductWeight = 0.05
+        maxProductWeight = 2
         products = {}
-        n = random.randint(3, 5)
-        # Polowa produktów na wage
+        n = random.randint(minProductCount, maxProductCount)
+
         for i in range(n):
+            # half of products are by_weight
             randomProduct = random.choice( self.productByWeightList if i < n/2 else self.productByPieceList )
-            randomProduct = randomProduct.clone( int((random.random()*1.95+0.05)*100_00)//100 if randomProduct.getType() == ProductType.BY_WEIGHT else -1 )
+
+            randWeight = random.random()*(maxProductWeight - minProductWeight) + minProductWeight
+            randomProduct = randomProduct.clone( int(randWeight*100_00)//100 if randomProduct.getType() == ProductType.BY_WEIGHT else -1 )
             if randomProduct in products:
                 products[randomProduct] += 1
             else:
@@ -289,11 +309,12 @@ class GameEndView(View):
 
         self.drawText(self.__text, 400, h-75, 16)
         self.drawText("Czas gry: {}h {}m {}s ({} klientów)"
-                            .format(self.__timeH, self.__timeM, self.__timeS, self.__noClients),
+                            .format(self.__timeH, self.__timeM, self.__timeS, self.__noClients-1),
                       400, h-125, 16
                      )
+
         for i in range( len(self.__times) ):
             ms = int(self.__times[i]) % 1000
             s =  int(self.__times[i])//1000 % 60
             m =  int(self.__times[i])//1000//60
-            self.drawText("Klient {}: {}m {}s {}ms".format(i, m, s, ms), 400, h-(175+i*25), 12)
+            self.drawText("Klient {}: {}m {}s {}ms".format(i+1, m, s, ms), 400, h-(175+i*25), 12)

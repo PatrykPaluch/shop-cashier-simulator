@@ -19,6 +19,6 @@ dostarczający dodatkowych funkcji, które mogą być przydatne w różnych elem
 
 ### Pixel Art
 Jak się okazuje, biblioteka **arcade** nie jest przygotowana na pixelart. Nie wszystkie funkcje rysujące
-pozwalają na ustawienie filtrów skalowania dla tekstur, a te ręczne ustawianie tych parametrów 
+pozwalają na ustawienie filtrów skalowania dla tekstur, a ręczne ustawianie tych parametrów 
 OpenGL nie zawsze działa. Poradziłem sobie z tym problemem zapisując tekstury powiększone w programie
-graficznym i zapisywać większe (1 pixel jako 2x2px lub 4x4px).
+graficznym i zapisywać większe (1 pixel jako 2x2px lub 4x4px). 
