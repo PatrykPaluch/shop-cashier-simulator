@@ -6,6 +6,7 @@ Czyli instrukcja jak grać w grę.
 
 Prosty filmik pokazujący rozgrywkę:
 
+[<img alt='Video' src='https://image.prntscr.com/image/Ge1NdCASTqeYi9eANoHrHA.png' width='300px'>](http://www.youtube.com/watch?v=Jb5dzIwXR7Y)
 
 # Kasa fiskalna
 Kasa fiskalna jest zaznaczona na *(img.1)* numerem **2** i jest najważniejszym elementem gry. Na niej
