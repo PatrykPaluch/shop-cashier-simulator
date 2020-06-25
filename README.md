@@ -1,6 +1,8 @@
 # shop-cashier-simulator
 Mały szkolny projekt
 
+GitHub: [Patrykas1000/shop-cashier-simulator](https://github.com/Patrykas1000/shop-cashier-simulator)
+
 **\[PL\]**
 
 Raport, czyli użyte elementy z wymagań w [Raport.md](Raport.md)
